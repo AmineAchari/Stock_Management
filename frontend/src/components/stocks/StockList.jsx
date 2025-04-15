@@ -3,6 +3,17 @@ import { useNavigate } from "react-router-dom";
 import StockService from '../../services/stock.service';
 import ImportStocksModal from './ImportStocksModal';
 
+// Ajouter le composant ActionButton ici, avant le composant StockList
+const ActionButton = ({ icon, label, variant, onClick, title }) => (
+  <button
+    className={`btn btn-${variant} btn-sm mx-1`}
+    onClick={onClick}
+    title={title}
+  >
+    <i className={`fas ${icon} me-1`}></i> {label}
+  </button>
+);
+
 const StockList = () => {
   const navigate = useNavigate();
   const [stocks, setStocks] = useState([]);
@@ -19,10 +30,10 @@ const StockList = () => {
     try {
       setLoading(true);
       setError('');
-      
+
       const stocksResponse = await StockService.getAllStocks();
       let statsResponse;
-      
+
       try {
         statsResponse = await StockService.getStockStatistics();
       } catch (statsError) {
@@ -56,15 +67,15 @@ const StockList = () => {
   };
 
   const handleDelete = async (id) => {
-    const confirmMessage = 'Êtes-vous sûr de vouloir supprimer ce stock ?\n' + 
-                         'Les associations avec les produits seront conservées.';
-    
+    const confirmMessage = 'Êtes-vous sûr de vouloir supprimer ce stock ?\n' +
+      'Les associations avec les produits seront conservées.';
+
     if (window.confirm(confirmMessage)) {
       try {
         setLoading(true);
         setError('');
         setSuccess('');
-        
+
         await StockService.deleteStock(id);
         setSuccess('Stock supprimé avec succès. Les associations produits sont conservées.');
         await loadStocks();
@@ -113,24 +124,26 @@ const StockList = () => {
         <div className="card-header d-flex justify-content-between align-items-center">
           <h5 className="mb-0">Liste des Stocks</h5>
           <div>
-            <button 
-              className="btn btn-success btn-sm me-2"
-              onClick={() => setShowImportModal(true)}
-            >
-              📥 Importer
-            </button>
-            <button 
-              className="btn btn-primary btn-sm"
+            <ActionButton
+              icon="fa-plus"
+              variant="primary"
               onClick={() => navigate('/stocks/new')}
-            >
-              ➕ Ajouter
-            </button>
+              title="Ajouter un nouveau stock"
+              label="Ajouter"
+            />
+            <ActionButton
+              icon="fa-file-import"
+              variant="success"
+              onClick={() => setShowImportModal(true)}
+              title="Importer des stocks"
+              label="Importer"
+            />
           </div>
         </div>
         <div className="card-body">
           {error && <div className="alert alert-danger">{error}</div>}
           {success && <div className="alert alert-success">{success}</div>}
-          
+
           {loading ? (
             <div className="text-center">
               <div className="spinner-border text-primary" role="status">
@@ -167,24 +180,29 @@ const StockList = () => {
                             {renderStockStatus(stock)}
                           </td>
                           <td>
-                            <button 
-                              className="btn btn-outline-primary btn-sm me-2"
-                              onClick={() => navigate(`/stocks/${stock.id}`)}
-                            >
-                              Voir
-                            </button>
-                            <button 
-                              className="btn btn-outline-warning btn-sm me-2"
-                              onClick={() => navigate(`/stocks/edit/${stock.id}`)}
-                            >
-                              Modifier
-                            </button>
-                            <button 
-                              className="btn btn-outline-danger btn-sm"
-                              onClick={() => handleDelete(stock.id)}
-                            >
-                              Supprimer
-                            </button>
+                            <div className="d-flex align-items-center">
+                              <ActionButton
+                                icon="fa-eye"
+                                variant="primary"
+                                onClick={() => navigate(`/stocks/${stock.id}`)}
+                                title="Voir les détails"
+                                label="Voir"
+                              />
+                              <ActionButton
+                                icon="fa-edit"
+                                variant="warning"
+                                onClick={() => navigate(`/stocks/edit/${stock.id}`)}
+                                title="Modifier le stock"
+                                label="Modifier"
+                              />
+                              <ActionButton
+                                icon="fa-trash"
+                                variant="danger"
+                                onClick={() => handleDelete(stock.id)}
+                                title="Supprimer le stock"
+                                label="Supprimer"
+                              />
+                            </div>
                           </td>
                         </tr>
                       );
@@ -197,7 +215,7 @@ const StockList = () => {
         </div>
       </div>
 
-      <ImportStocksModal 
+      <ImportStocksModal
         show={showImportModal}
         onClose={() => setShowImportModal(false)}
         onImportSuccess={handleImportSuccess}

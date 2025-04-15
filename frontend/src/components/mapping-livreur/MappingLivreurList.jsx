@@ -1,6 +1,24 @@
 import React, { useState, useEffect } from 'react';
 import MappingLivreurService from '../../services/mapping-livreur.service';
 
+// Add ActionButton component
+const ActionButton = ({ icon, label, variant, onClick, title, type, disabled }) => (
+  <button
+    type={type || "button"}
+    className={`btn btn-${variant} btn-sm mx-1`}
+    onClick={onClick}
+    title={title}
+    disabled={disabled}
+  >
+    {disabled ? (
+      <span className="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+    ) : (
+      <i className={`fas ${icon} me-1`}></i>
+    )}
+    {label}
+  </button>
+);
+
 const MappingLivreurList = () => {
   const [mappings, setMappings] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -189,18 +207,20 @@ const MappingLivreurList = () => {
         <div className="card-header d-flex justify-content-between align-items-center">
           <h5 className="mb-0">Table des Livreurs</h5>
           <div>
-            <button 
-              className="btn btn-primary btn-sm me-2" 
+            <ActionButton
+              icon="fa-plus"
+              variant="primary"
               onClick={handleShowAddModal}
-            >
-              ➕ Ajouter un livreur
-            </button>
-            <button 
-              className="btn btn-success btn-sm" 
+              title="Ajouter un nouveau livreur"
+              label="Ajouter"
+            />
+            <ActionButton
+              icon="fa-file-import"
+              variant="success"
               onClick={() => setShowImportModal(true)}
-            >
-              📥 Importer
-            </button>
+              title="Importer des livreurs"
+              label="Importer"
+            />
           </div>
         </div>
         <div className="card-body">
@@ -239,18 +259,22 @@ const MappingLivreurList = () => {
                         <td>{mapping.ville}</td>
                         <td>{mapping.typeStock}</td>
                         <td>
-                          <button 
-                            className="btn btn-outline-warning btn-sm me-2" 
-                            onClick={() => handleShowEditModal(mapping)}
-                          >
-                            Modifier
-                          </button>
-                          <button 
-                            className="btn btn-outline-danger btn-sm" 
-                            onClick={() => confirmDelete(mapping)}
-                          >
-                            Supprimer
-                          </button>
+                          <div className="d-flex align-items-center">
+                            <ActionButton
+                              icon="fa-edit"
+                              variant="warning"
+                              onClick={() => handleShowEditModal(mapping)}
+                              title="Modifier le livreur"
+                              label="Modifier"
+                            />
+                            <ActionButton
+                              icon="fa-trash"
+                              variant="danger"
+                              onClick={() => confirmDelete(mapping)}
+                              title="Supprimer le livreur"
+                              label="Supprimer"
+                            />
+                          </div>
                         </td>
                       </tr>
                     ))
@@ -329,12 +353,20 @@ const MappingLivreurList = () => {
                   </div>
                 </div>
                 <div className="modal-footer">
-                  <button type="button" className="btn btn-secondary" onClick={handleCloseModal}>
-                    Annuler
-                  </button>
-                  <button type="submit" className="btn btn-primary">
-                    {currentMapping ? 'Mettre à jour' : 'Ajouter'}
-                  </button>
+                  <ActionButton
+                    icon="fa-times"
+                    variant="secondary"
+                    onClick={handleCloseModal}
+                    title="Annuler les modifications"
+                    label="Annuler"
+                  />
+                  <ActionButton
+                    type="submit"
+                    icon={currentMapping ? "fa-save" : "fa-plus"}
+                    variant="primary"
+                    title={currentMapping ? "Mettre à jour le livreur" : "Ajouter le livreur"}
+                    label={currentMapping ? "Mettre à jour" : "Ajouter"}
+                  />
                 </div>
               </form>
             </div>
@@ -363,12 +395,20 @@ const MappingLivreurList = () => {
                 )}
               </div>
               <div className="modal-footer">
-                <button type="button" className="btn btn-secondary" onClick={() => setShowDeleteModal(false)}>
-                  Annuler
-                </button>
-                <button type="button" className="btn btn-danger" onClick={handleDelete}>
-                  Supprimer
-                </button>
+                <ActionButton
+                  icon="fa-times"
+                  variant="secondary"
+                  onClick={() => setShowDeleteModal(false)}
+                  title="Annuler la suppression"
+                  label="Annuler"
+                />
+                <ActionButton
+                  icon="fa-trash"
+                  variant="danger"
+                  onClick={handleDelete}
+                  title="Confirmer la suppression"
+                  label="Supprimer"
+                />
               </div>
             </div>
           </div>
@@ -411,16 +451,21 @@ const MappingLivreurList = () => {
                   )}
                 </div>
                 <div className="modal-footer">
-                  <button type="button" className="btn btn-secondary" onClick={() => setShowImportModal(false)}>
-                    Fermer
-                  </button>
-                  <button 
-                    type="submit" 
-                    className="btn btn-primary"
+                  <ActionButton
+                    icon="fa-times"
+                    variant="secondary"
+                    onClick={() => setShowImportModal(false)}
+                    title="Fermer le modal"
+                    label="Fermer"
+                  />
+                  <ActionButton
+                    type="submit"
+                    icon="fa-upload"
+                    variant="primary"
+                    title="Importer les données"
+                    label={importLoading ? "Importation..." : "Importer"}
                     disabled={importLoading || !selectedFile}
-                  >
-                    {importLoading ? 'Importation...' : 'Importer'}
-                  </button>
+                  />
                 </div>
               </form>
             </div>
@@ -434,4 +479,4 @@ const MappingLivreurList = () => {
   );
 };
 
-export default MappingLivreurList; 
+export default MappingLivreurList;

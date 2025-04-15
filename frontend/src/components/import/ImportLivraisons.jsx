@@ -1,6 +1,24 @@
 import React, { useState } from 'react';
 import ImportService from '../../services/import.service';
 
+// Add ActionButton component
+const ActionButton = ({ icon, label, variant, onClick, title, type, disabled }) => (
+  <button
+    type={type || "button"}
+    className={`btn btn-${variant} btn-sm mx-1`}
+    onClick={onClick}
+    title={title}
+    disabled={disabled}
+  >
+    {disabled ? (
+      <span className="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+    ) : (
+      <i className={`fas ${icon} me-1`}></i>
+    )}
+    {label}
+  </button>
+);
+
 const ImportLivraisons = () => {
   const [selectedFile, setSelectedFile] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -107,7 +125,7 @@ const ImportLivraisons = () => {
     <div className="container mt-4">
       <div className="card shadow-sm">
         <div className="card-header">
-          <h5>Importation des Livraisons</h5>
+          <h5 className="mb-0">Importation des Livraisons</h5>
         </div>
         <div className="card-body">
           <p className="card-text">
@@ -179,18 +197,28 @@ const ImportLivraisons = () => {
               </div>
             </div>
             
-            <button 
-              className="btn btn-primary" 
-              type="submit"
-              disabled={loading || !selectedFile}
-            >
-              {loading ? (
-                <>
-                  <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-                  Importation en cours...
-                </>
-              ) : 'Importer'}
-            </button>
+            <div className="d-flex justify-content-between align-items-center mt-3">
+              <ActionButton
+                type="submit"
+                icon="fa-upload"
+                variant="primary"
+                title="Importer les livraisons"
+                label={loading ? "Importation en cours..." : "Importer"}
+                disabled={loading || !selectedFile}
+              />
+              <ActionButton
+                icon="fa-times"
+                variant="secondary"
+                onClick={() => {
+                  setSelectedFile(null);
+                  document.getElementById('formFile').value = '';
+                  setMessage('');
+                }}
+                title="Réinitialiser le formulaire"
+                label="Annuler"
+                disabled={loading}
+              />
+            </div>
           </form>
           
           {loading && (

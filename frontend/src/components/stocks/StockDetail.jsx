@@ -11,15 +11,15 @@ const StockDetail = () => {
   const [produitsLoading, setProduitsLoading] = useState(true);
   const [message, setMessage] = useState("");
   const { id } = useParams();
-  
+
   // États pour l'édition de quantité
   const [editMode, setEditMode] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [nouvelleQuantite, setNouvelleQuantite] = useState(0);
-  
+
   // Charger tous les produits pour obtenir leurs noms
   const [allProduits, setAllProduits] = useState([]);
-  
+
   const fetchAllProduits = useCallback(async () => {
     try {
       const response = await apiService.getAllProduits();
@@ -47,7 +47,7 @@ const StockDetail = () => {
       setProduitsLoading(true);
       console.log("Récupération des produits pour le stock ID:", id);
       const response = await apiService.getProduitsByStock(id);
-      
+
       // Store raw product data
       const rawProduits = response.data;
       console.log("Données brutes reçues:", rawProduits);
@@ -68,14 +68,14 @@ const StockDetail = () => {
       console.log("Produits traités:", produitsProcessed);
       setProduits(produitsProcessed);
       setProduitsAvecNoms(produitsProcessed); // Set initial data
-      
+
     } catch (error) {
       console.error("Erreur lors du chargement des produits:", error);
     } finally {
       setProduitsLoading(false);
     }
   }, [id]);
-  
+
   // Enrichir les produits avec leurs noms
   useEffect(() => {
     if (produits.length > 0 && allProduits.length > 0) {
@@ -117,7 +117,7 @@ const StockDetail = () => {
     setEditingId(produit.id);
     setNouvelleQuantite(produit.quantite);
   };
-  
+
   const handleSave = async (produitId) => {
     try {
       setMessage("Modification en cours...");
@@ -127,7 +127,7 @@ const StockDetail = () => {
       setMessage("Quantité modifiée avec succès!");
       // Rafraîchir les données
       fetchProduitsByStock();
-      
+
       // Effacer le message après 3 secondes
       setTimeout(() => {
         setMessage("");
@@ -137,7 +137,7 @@ const StockDetail = () => {
       setMessage("Erreur lors de la modification: " + (error.response?.data?.message || error.message));
     }
   };
-  
+
   const handleCancel = () => {
     setEditMode(false);
     setEditingId(null);
@@ -181,6 +181,24 @@ const StockDetail = () => {
     }
   };
 
+  // Ajouter après les autres handlers
+  const handleAnnulerAffectation = async (produitId) => {
+    if (window.confirm("Êtes-vous sûr de vouloir annuler cette affectation ?")) {
+      try {
+        const response = await apiService.annulerAffectation(produitId, id);
+        if (response.data.success) {
+          setMessage("Affectation annulée avec succès");
+          fetchProduitsByStock();
+        } else {
+          setMessage(response.data.message || "Erreur lors de l'annulation");
+        }
+      } catch (error) {
+        console.error("Erreur lors de l'annulation:", error);
+        setMessage(error.response?.data?.message || "Erreur lors de l'annulation de l'affectation");
+      }
+    }
+  };
+
   return (
     <div className="container">
       <h2>Détails du stock</h2>
@@ -199,50 +217,65 @@ const StockDetail = () => {
         </div>
       ) : stock ? (
         <div className="card">
-          <div className="card-header py-1 d-flex align-items-center">
+          <div className="card-header py-2">
             <h5 className="mb-0">{stock.nom}</h5>
           </div>
           <div className="card-body">
-            <div className="row">
+            {/* Informations du stock */}
+            <div className="row mb-4">
               <div className="col-md-6">
-                <p className="mb-1">
-                  <strong>ID:</strong> {stock.id}
-                </p>
-                <p className="mb-1">
-                  <strong>Adresse:</strong> {stock.adresse}
-                </p>
-                <p className="mb-1">
-                  <strong>Ville:</strong> {stock.ville}
-                </p>
+                <p className="mb-2"><strong>ID:</strong> {stock.id}</p>
+                <p className="mb-2"><strong>Adresse:</strong> {stock.adresse}</p>
+                <p className="mb-2"><strong>Ville:</strong> {stock.ville}</p>
               </div>
               <div className="col-md-6">
-                <p className="mb-1">
-                  <strong>Pays:</strong> {stock.pays}
-                </p>
-                <p className="mb-1">
-                  <strong>Type de stock:</strong> {stock.typeStock}
-                </p>
+                <p className="mb-2"><strong>Pays:</strong> {stock.pays}</p>
+                <p className="mb-2"><strong>Type de stock:</strong> {stock.typeStock}</p>
               </div>
             </div>
-            
-            <h5 className="mt-3 d-flex align-items-center">
-              <span>Produits dans ce stock</span>
-              <button 
-                onClick={handleRefreshProduits} 
-                className="btn btn-outline-secondary btn-sm ms-2 py-0"
+
+            {/* Barre d'actions principale */}
+            <div className="d-flex justify-content-between align-items-center mb-4">
+              <div className="btn-group">
+                <Link to="/stocks" className="btn btn-secondary">
+                  <i className="fas fa-arrow-left me-1"></i> Retour
+                </Link>
+                <Link to={`/stocks/edit/${stock.id}`} className="btn btn-warning">
+                  <i className="fas fa-edit me-1"></i> Modifier
+                </Link>
+                <Link to="/affectation" className="btn btn-primary">
+                  <i className="fas fa-plus me-1"></i> Affecter un produit
+                </Link>
+              </div>
+              <button
+                className="btn btn-success"
+                onClick={handleExport}
+                disabled={produitsLoading || produitsAvecNoms.length === 0}
+              >
+                <i className="fas fa-file-excel me-1"></i> Exporter Excel
+              </button>
+            </div>
+
+            {/* En-tête de la section produits */}
+            <div className="d-flex justify-content-between align-items-center mb-3">
+              <h5 className="mb-0">Produits dans ce stock</h5>
+              <button
+                onClick={handleRefreshProduits}
+                className="btn btn-outline-secondary"
                 disabled={produitsLoading}
               >
                 {produitsLoading ? (
                   <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
                 ) : (
-                  <span>Rafraîchir</span>
+                  <><i className="fas fa-sync-alt me-1"></i> Rafraîchir</>
                 )}
               </button>
-            </h5>
-            
+            </div>
+
+            {/* Table des produits */}
             {produitsLoading ? (
-              <div className="text-center my-3">
-                <div className="spinner-border spinner-border-sm" role="status">
+              <div className="text-center my-4">
+                <div className="spinner-border" role="status">
                   <span className="sr-only">Chargement des produits...</span>
                 </div>
               </div>
@@ -270,7 +303,7 @@ const StockDetail = () => {
                               min="0"
                               value={nouvelleQuantite}
                               onChange={(e) => setNouvelleQuantite(parseInt(e.target.value) || 0)}
-                              style={{width: '80px'}}
+                              style={{ width: '80px' }}
                             />
                           ) : (
                             <span className={`badge ${ps.quantite > 10 ? 'bg-success' : 'bg-warning'}`}>
@@ -280,37 +313,44 @@ const StockDetail = () => {
                         </td>
                         <td>
                           {editMode && editingId === ps.id ? (
-                            <div className="btn-group" role="group">
+                            <div className="btn-group btn-group-sm">
                               <button
-                                className="btn btn-success btn-sm"
+                                className="btn btn-outline-success"
                                 onClick={() => handleSave(ps.id)}
-                                title="Enregistrer"
+                                title="Sauvegarder"
                               >
-                                <i className="fas fa-check"></i>
+                                <i className="fa-solid fa-floppy-disk"></i>
                               </button>
                               <button
-                                className="btn btn-secondary btn-sm"
+                                className="btn btn-outline-secondary"
                                 onClick={handleCancel}
                                 title="Annuler"
                               >
-                                <i className="fas fa-times"></i>
+                                <i className="fa-solid fa-xmark"></i>
                               </button>
                             </div>
                           ) : (
-                            <div className="btn-group" role="group">
-                              <Link 
-                                to={`/produits/${ps.id}`} 
-                                className="btn btn-info btn-sm"
+                            <div className="btn-group btn-group-sm">
+                              <Link
+                                to={`/produits/${ps.id}`}
+                                className="btn btn-outline-info"
                                 title="Voir les détails"
                               >
-                                <i className="fas fa-eye"></i>
+                                <i className="fa-solid fa-circle-info"></i>
                               </Link>
                               <button
-                                className="btn btn-warning btn-sm"
+                                className="btn btn-outline-warning"
                                 onClick={() => handleEdit(ps)}
                                 title="Modifier la quantité"
                               >
-                                <i className="fas fa-edit"></i>
+                                <i className="fa-solid fa-pen-to-square"></i>
+                              </button>
+                              <button
+                                className="btn btn-outline-danger"
+                                onClick={() => handleAnnulerAffectation(ps.id)}
+                                title="Retirer du stock"
+                              >
+                                <i className="fa-solid fa-trash-can"></i>
                               </button>
                             </div>
                           )}
@@ -332,36 +372,13 @@ const StockDetail = () => {
                 </table>
               </div>
             ) : (
-              <div className="alert alert-info">
-                <i className="fas fa-info-circle me-2"></i>
-                Aucun produit dans ce stock. 
-                <Link to="/affectation" className="btn btn-primary btn-sm ms-2">
-                  <i className="fas fa-plus me-1"></i>
-                  Affecter un produit
+              <div className="alert alert-info d-flex align-items-center justify-content-between">
+                <span><i className="fas fa-info-circle me-2"></i>Aucun produit dans ce stock.</span>
+                <Link to="/affectation" className="btn btn-primary">
+                  <i className="fas fa-plus me-1"></i>Affecter un produit
                 </Link>
               </div>
             )}
-          </div>
-          <div className="card-footer py-2 d-flex justify-content-between">
-            <div className="btn-group btn-group-sm">
-              <Link to="/stocks" className="btn btn-secondary">
-                Retour
-              </Link>
-              <Link to={`/stocks/edit/${stock.id}`} className="btn btn-warning">
-                Modifier
-              </Link>
-              <Link to="/affectation" className="btn btn-primary">
-                Affecter un produit
-              </Link>
-            </div>
-            <button 
-              className="btn btn-success btn-sm"
-              onClick={handleExport}
-              disabled={produitsLoading || produitsAvecNoms.length === 0}
-            >
-              <i className="fas fa-file-excel me-1"></i>
-              Exporter Excel
-            </button>
           </div>
         </div>
       ) : (

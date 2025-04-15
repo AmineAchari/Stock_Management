@@ -27,7 +27,7 @@ class StockService {
   getStockProduits(id) {
     return axios.get(`${API_URL}/stocks/${id}/produits`, { headers: authHeader() });
   }
-  
+
   // Récupérer les stocks groupés par pays
   getStocksByCountry() {
     return axios.get(`${API_URL}/stocks/by-country`, { headers: authHeader() });
@@ -52,7 +52,7 @@ class StockService {
   importStocks(file) {
     const formData = new FormData();
     formData.append('file', file);
-    
+
     return axios.post(`${API_URL}/import/stocks`, formData, {
       headers: {
         ...authHeader(),

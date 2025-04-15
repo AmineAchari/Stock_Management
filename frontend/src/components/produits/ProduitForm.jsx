@@ -2,6 +2,24 @@ import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import apiService from "../../services/api.service";
 
+// Add ActionButton component
+const ActionButton = ({ icon, label, variant, onClick, title, type, disabled }) => (
+  <button
+    type={type || "button"}
+    className={`btn btn-${variant} btn-sm mx-1`}
+    onClick={onClick}
+    title={title}
+    disabled={disabled}
+  >
+    {disabled ? (
+      <span className="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+    ) : (
+      <i className={`fas ${icon} me-1`}></i>
+    )}
+    {label}
+  </button>
+);
+
 const ProduitForm = () => {
   const initialProduitState = {
     nom: "",
@@ -65,69 +83,77 @@ const ProduitForm = () => {
   };
 
   return (
-    <div className="container">
-      <h2>{isEdit ? "Modifier le produit" : "Ajouter un produit"}</h2>
-
-      {message && (
-        <div className="alert alert-info" role="alert">
-          {message}
+    <div className="container mt-4">
+      <div className="card shadow-sm">
+        <div className="card-header">
+          <h5 className="mb-0">{isEdit ? "Modifier le produit" : "Ajouter un produit"}</h5>
         </div>
-      )}
-
-      <form onSubmit={saveProduit}>
-        <div className="form-group">
-          <label htmlFor="nom">Nom</label>
-          <input
-            type="text"
-            className="form-control"
-            id="nom"
-            name="nom"
-            value={produit.nom}
-            onChange={handleInputChange}
-            required
-          />
-        </div>
-
-        <div className="form-group">
-          <label htmlFor="reference">Référence</label>
-          <input
-            type="text"
-            className="form-control"
-            id="reference"
-            name="reference"
-            value={produit.reference}
-            onChange={handleInputChange}
-            required
-          />
-        </div>
-
-        <div className="form-group">
-          <label htmlFor="description">Description</label>
-          <textarea
-            className="form-control"
-            id="description"
-            name="description"
-            rows="3"
-            value={produit.description}
-            onChange={handleInputChange}
-          ></textarea>
-        </div>
-
-        <button type="submit" className="btn btn-primary" disabled={loading}>
-          {loading ? (
-            <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-          ) : (
-            "Enregistrer"
+        <div className="card-body">
+          {message && (
+            <div className="alert alert-info" role="alert">
+              {message}
+            </div>
           )}
-        </button>
-        <button
-          type="button"
-          className="btn btn-secondary ml-2"
-          onClick={() => navigate("/produits")}
-        >
-          Annuler
-        </button>
-      </form>
+
+          <form onSubmit={saveProduit}>
+            <div className="form-group mb-3">
+              <label htmlFor="nom">Nom</label>
+              <input
+                type="text"
+                className="form-control"
+                id="nom"
+                name="nom"
+                value={produit.nom}
+                onChange={handleInputChange}
+                required
+              />
+            </div>
+
+            <div className="form-group mb-3">
+              <label htmlFor="reference">Référence</label>
+              <input
+                type="text"
+                className="form-control"
+                id="reference"
+                name="reference"
+                value={produit.reference}
+                onChange={handleInputChange}
+                required
+              />
+            </div>
+
+            <div className="form-group mb-3">
+              <label htmlFor="description">Description</label>
+              <textarea
+                className="form-control"
+                id="description"
+                name="description"
+                rows="3"
+                value={produit.description}
+                onChange={handleInputChange}
+              ></textarea>
+            </div>
+
+            <div className="d-flex gap-2">
+              <ActionButton
+                type="submit"
+                icon="fa-save"
+                variant="primary"
+                title="Enregistrer le produit"
+                label="Enregistrer"
+                disabled={loading}
+              />
+              <ActionButton
+                icon="fa-times"
+                variant="secondary"
+                onClick={() => navigate("/produits")}
+                title="Annuler les modifications"
+                label="Annuler"
+              />
+            </div>
+          </form>
+        </div>
+      </div>
     </div>
   );
 };

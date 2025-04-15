@@ -132,4 +132,23 @@ public class ProduitStockController {
             ));
         }
     }
+
+    @DeleteMapping("/annuler-affectation")
+    @PreAuthorize("hasAuthority('GESTIONNAIRE_STOCK')")
+    public ResponseEntity<?> annulerAffectation(
+            @RequestParam Long produitId,
+            @RequestParam Long stockId) {
+        try {
+            produitStockService.annulerAffectation(produitId, stockId);
+            return ResponseEntity.ok(Map.of(
+                "success", true,
+                "message", "Affectation annulée avec succès"
+            ));
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(Map.of(
+                "success", false,
+                "message", e.getMessage()
+            ));
+        }
+    }
 }

@@ -2,6 +2,24 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import apiService from "../../services/api.service";
 
+// Add ActionButton component
+const ActionButton = ({ icon, label, variant, onClick, title, type, disabled }) => (
+  <button
+    type={type || "button"}
+    className={`btn btn-${variant} btn-sm mx-1`}
+    onClick={onClick}
+    title={title}
+    disabled={disabled}
+  >
+    {disabled ? (
+      <span className="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+    ) : (
+      <i className={`fas ${icon} me-1`}></i>
+    )}
+    {label}
+  </button>
+);
+
 const AffectationForm = () => {
   const [produits, setProduits] = useState([]);
   const [stocks, setStocks] = useState([]);
@@ -68,80 +86,88 @@ const AffectationForm = () => {
   };
 
   return (
-    <div className="container">
-      <h2>Affecter un produit à un stock</h2>
-
-      {message && (
-        <div className="alert alert-info" role="alert">
-          {message}
+    <div className="container mt-4">
+      <div className="card shadow-sm">
+        <div className="card-header">
+          <h5 className="mb-0">Affecter un produit à un stock</h5>
         </div>
-      )}
-
-      <form onSubmit={handleSubmit}>
-        <div className="form-group">
-          <label htmlFor="produitId">Produit</label>
-          <select
-            className="form-control"
-            id="produitId"
-            value={produitId}
-            onChange={(e) => setProduitId(e.target.value)}
-            required
-          >
-            <option value="">Sélectionnez un produit</option>
-            {produits.map((produit) => (
-              <option key={produit.id} value={produit.id}>
-                {produit.nom} ({produit.reference})
-              </option>
-            ))}
-          </select>
-        </div>
-
-        <div className="form-group">
-          <label htmlFor="stockId">Stock</label>
-          <select
-            className="form-control"
-            id="stockId"
-            value={stockId}
-            onChange={(e) => setStockId(e.target.value)}
-            required
-          >
-            <option value="">Sélectionnez un stock</option>
-            {stocks.map((stock) => (
-              <option key={stock.id} value={stock.id}>
-                {stock.nom} ({stock.ville}, {stock.pays})
-              </option>
-            ))}
-          </select>
-        </div>
-
-        <div className="form-group">
-          <label htmlFor="quantite">Quantité</label>
-          <input
-            type="number"
-            className="form-control"
-            id="quantite"
-            min="1"
-            value={quantite}
-            onChange={(e) => setQuantite(e.target.value)}
-            required
-          />
-        </div>
-
-        <button type="submit" className="btn btn-primary" disabled={loading}>
-          {loading ? (
-            <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-          ) : (
-            "Affecter"
+        <div className="card-body">
+          {message && (
+            <div className="alert alert-info" role="alert">
+              {message}
+            </div>
           )}
-        </button>
-        <button
-          type="button"
-          className="btn btn-secondary ml-2"
-          onClick={() => navigate("/stocks")}
-        >
-          Annuler
-        </button>
-      </form>
+
+          <form onSubmit={handleSubmit}>
+            <div className="form-group">
+              <label htmlFor="produitId">Produit</label>
+              <select
+                className="form-control"
+                id="produitId"
+                value={produitId}
+                onChange={(e) => setProduitId(e.target.value)}
+                required
+              >
+                <option value="">Sélectionnez un produit</option>
+                {produits.map((produit) => (
+                  <option key={produit.id} value={produit.id}>
+                    {produit.nom} ({produit.reference})
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="stockId">Stock</label>
+              <select
+                className="form-control"
+                id="stockId"
+                value={stockId}
+                onChange={(e) => setStockId(e.target.value)}
+                required
+              >
+                <option value="">Sélectionnez un stock</option>
+                {stocks.map((stock) => (
+                  <option key={stock.id} value={stock.id}>
+                    {stock.nom} ({stock.ville}, {stock.pays})
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="quantite">Quantité</label>
+              <input
+                type="number"
+                className="form-control"
+                id="quantite"
+                min="0"
+                value={quantite}
+                onChange={(e) => setQuantite(e.target.value)}
+                required
+              />
+            </div>
+
+            <div className="d-flex gap-2 mt-3">
+              <ActionButton
+                type="submit"
+                icon="fa-link"
+                variant="primary"
+                title="Affecter le produit au stock"
+                label="Affecter"
+                disabled={loading}
+              />
+              <ActionButton
+                icon="fa-times"
+                variant="secondary"
+                onClick={() => navigate("/stocks")}
+                title="Annuler l'affectation"
+                label="Annuler"
+              />
+            </div>
+          </form>
+        </div>
+      </div>
     </div>
   );
 };

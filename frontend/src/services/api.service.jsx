@@ -92,7 +92,7 @@ const apiService = {
   getStocksByCountry: () => axiosInstance.get('/stocks/by-country'),
   
   // Récupérer les produits par pays
-  getProduitsByCountry: (pays) => axiosInstance.get('/produit-stock/pays', {
+  getProduitsByCountry: (pays) => axiosInstance.get('/produit-stock/rapport-par-pays', {
     params: { pays }
   }),
 
@@ -108,6 +108,15 @@ const apiService = {
       console.error('Error fetching low stock items:', error);
       throw error;
     }
+  },
+
+  annulerAffectation: (produitId, stockId) => {
+    return axiosInstance.delete('/produit-stock/annuler-affectation', {
+      params: { 
+        produitId, 
+        stockId 
+      }
+    });
   }
 };
 

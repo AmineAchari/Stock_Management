@@ -3,6 +3,17 @@ import { useNavigate } from "react-router-dom";
 import ProduitService from '../../services/produit.service';
 import ImportProduitsModal from './ImportProduitsModal';
 
+// Ajouter le composant ActionButton
+const ActionButton = ({ icon, label, variant, onClick, title }) => (
+  <button
+    className={`btn btn-${variant} btn-sm mx-1`}
+    onClick={onClick}
+    title={title}
+  >
+    <i className={`fas ${icon} me-1`}></i> {label}
+  </button>
+);
+
 const ProduitList = () => {
   const navigate = useNavigate();
   const [produits, setProduits] = useState([]);
@@ -10,7 +21,6 @@ const ProduitList = () => {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [showImportModal, setShowImportModal] = useState(false);
-
 
   useEffect(() => {
     loadProduits();
@@ -48,18 +58,20 @@ const ProduitList = () => {
         <div className="card-header d-flex justify-content-between align-items-center">
           <h5 className="mb-0">Liste des Produits</h5>
           <div>
-            <button
-              className="btn btn-primary btn-sm me-2"
+            <ActionButton
+              icon="fa-plus"
+              variant="primary"
               onClick={() => navigate('/produits/new')}
-            >
-              ➕ Ajouter un produit
-            </button>
-            <button 
-              className="btn btn-secondary btn-sm"
+              title="Ajouter un nouveau produit"
+              label="Ajouter"
+            />
+            <ActionButton
+              icon="fa-file-import"
+              variant="success"
               onClick={() => setShowImportModal(true)}
-            >
-              📤 Importer des produits
-            </button>
+              title="Importer des produits"
+              label="Importer"
+            />
           </div>
         </div>
         <div className="card-body">
@@ -95,24 +107,29 @@ const ProduitList = () => {
                         <td>{produit.nom}</td>
                         <td>{produit.description}</td>
                         <td>
-                          <button
-                            className="btn btn-outline-primary btn-sm me-2"
-                            onClick={() => navigate(`/produits/${produit.id}`)}
-                          >
-                            Voir
-                          </button>
-                          <button
-                            className="btn btn-outline-warning btn-sm me-2"
-                            onClick={() => navigate(`/produits/edit/${produit.id}`)}
-                          >
-                            Modifier
-                          </button>
-                          <button
-                            className="btn btn-outline-danger btn-sm"
-                            onClick={() => handleDelete(produit.id)}
-                          >
-                            Supprimer
-                          </button>
+                          <div className="d-flex align-items-center">
+                            <ActionButton
+                              icon="fa-eye"
+                              variant="primary"
+                              onClick={() => navigate(`/produits/${produit.id}`)}
+                              title="Voir les détails"
+                              label="Voir"
+                            />
+                            <ActionButton
+                              icon="fa-edit"
+                              variant="warning"
+                              onClick={() => navigate(`/produits/edit/${produit.id}`)}
+                              title="Modifier le produit"
+                              label="Modifier"
+                            />
+                            <ActionButton
+                              icon="fa-trash"
+                              variant="danger"
+                              onClick={() => handleDelete(produit.id)}
+                              title="Supprimer le produit"
+                              label="Supprimer"
+                            />
+                          </div>
                         </td>
                       </tr>
                     ))

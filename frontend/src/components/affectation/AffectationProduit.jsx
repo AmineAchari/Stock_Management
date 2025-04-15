@@ -167,7 +167,7 @@ const AffectationProduit = () => {
                   id="quantite"
                   value={quantite}
                   onChange={(e) => setQuantite(e.target.value)}
-                  min="1"
+                  min="0"
                 />
               </div>
 

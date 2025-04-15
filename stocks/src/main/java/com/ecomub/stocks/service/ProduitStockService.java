@@ -150,6 +150,31 @@ public class ProduitStockService {
         }
     }
 
+    @Transactional
+    public void annulerAffectation(Long produitId, Long stockId) {
+        System.out.println("\n=== ANNULATION AFFECTATION PRODUIT ===");
+        System.out.println("Produit ID: " + produitId);
+        System.out.println("Stock ID: " + stockId);
+
+        try {
+            // Vérifier si l'association existe
+            Optional<ProduitStock> produitStockOpt = produitStockRepository
+                .findByStock_IdAndProduit_Id(stockId, produitId);
+
+            if (produitStockOpt.isEmpty()) {
+                throw new RuntimeException("Ce produit n'est pas affecté à ce stock");
+            }
+
+            // Supprimer l'association
+            produitStockRepository.delete(produitStockOpt.get());
+            System.out.println("✅ Affectation annulée avec succès");
+
+        } catch (Exception e) {
+            System.out.println("❌ Erreur lors de l'annulation: " + e.getMessage());
+            throw new RuntimeException("Erreur lors de l'annulation de l'affectation: " + e.getMessage());
+        }
+    }
+
     public List<ProduitStock> getProduitsByStock(Long stockId) {
         // Utiliser la méthode correcte pour récupérer tous les produits d'un stock
         return produitStockRepository.findByStock_Id(stockId);
