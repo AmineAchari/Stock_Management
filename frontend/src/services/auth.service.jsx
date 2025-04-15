@@ -86,6 +86,29 @@ class AuthService {
     const user = this.getCurrentUser();
     return !!user && !!user.token;
   }
+  
+  hasRole(roleName) {
+    const user = this.getCurrentUser();
+    if (!user) return false;
+    
+    // Vérification du rôle selon la structure réelle des données
+    if (user.roles && Array.isArray(user.roles)) {
+      // Si les rôles sont stockés dans un tableau de noms de rôles
+      return user.roles.includes(roleName);
+    } else if (user.role) {
+      // Si le rôle est stocké directement dans une propriété 'role'
+      return user.role === roleName;
+    } else if (user.authorities && Array.isArray(user.authorities)) {
+      // Si les rôles sont stockés dans un tableau d'objets 'authorities'
+      return user.authorities.some(auth => 
+        auth.authority === roleName || 
+        auth.role === roleName || 
+        auth === roleName
+      );
+    }
+    
+    return false;
+  }
 }
 
 // Création d'une instance nommée avant export

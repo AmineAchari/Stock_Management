@@ -1,6 +1,7 @@
 import axios from "axios";
 import authHeader from "./auth-header";
 
+const API_URL = 'http://localhost:8080/api';
 
 // Instance axios personnalisée
 const axiosInstance = axios.create({
@@ -36,24 +37,27 @@ const getConfig = () => {
 
 class ProduitService {
   getAllProduits() {
-    // Utiliser l'instance axios personnalisée avec le chemin complet
-    return axiosInstance.get("/api/produits/", getConfig());
+    return axios.get(`${API_URL}/produits`, { headers: authHeader() });
   }
 
   getProduitById(id) {
-    return axiosInstance.get(`/api/produits/${id}`, getConfig());
+    return axios.get(`${API_URL}/produits/${id}`, { headers: authHeader() });
   }
 
   createProduit(produit) {
-    return axiosInstance.post("/api/produits/", produit, getConfig());
+    return axios.post(`${API_URL}/produits`, produit, { headers: authHeader() });
   }
 
   updateProduit(id, produit) {
-    return axiosInstance.put(`/api/produits/${id}`, produit, getConfig());
+    return axios.put(`${API_URL}/produits/${id}`, produit, { headers: authHeader() });
   }
 
   deleteProduit(id) {
-    return axiosInstance.delete(`/api/produits/${id}`, getConfig());
+    return axios.delete(`${API_URL}/produits/${id}`, { headers: authHeader() });
+  }
+
+  getProduitStocks(id) {
+    return axios.get(`${API_URL}/produits/${id}/stocks`, { headers: authHeader() });
   }
 }
 

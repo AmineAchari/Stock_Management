@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/produit-stock")
@@ -22,11 +23,35 @@ public class ProduitStockController {
     // Affecter un produit à un stock avec une quantité
     @PostMapping("/affecter")
     @PreAuthorize("hasAuthority('GESTIONNAIRE_STOCK')")
-    public ProduitStock affecterProduitAuStock(
+    public ResponseEntity<?> affecterProduitAuStock(
             @RequestParam Long produitId,
             @RequestParam Long stockId,
             @RequestParam int quantite) {
-        return produitStockService.affecterProduitAuStock(produitId, stockId, quantite);
+        try {
+            // Vérifier si l'association existe déjà
+            Optional<ProduitStock> existingAssociation = produitStockService.findByStockAndProduit(stockId, produitId);
+            
+            if (existingAssociation.isPresent()) {
+                return ResponseEntity.badRequest().body(Map.of(
+                    "success", false,
+                    "message", "Ce produit est déjà affecté à ce stock"
+                ));
+            }
+
+            // Si pas d'association existante, procéder à l'affectation
+            ProduitStock produitStock = produitStockService.affecterProduitAuStock(produitId, stockId, quantite);
+            
+            return ResponseEntity.ok(Map.of(
+                "success", true,
+                "message", "Produit affecté avec succès",
+                "data", produitStock
+            ));
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(Map.of(
+                "success", false,
+                "message", e.getMessage()
+            ));
+        }
     }
 
     @GetMapping("/stock/{stockId}/produits")
@@ -41,14 +66,69 @@ public class ProduitStockController {
     public ResponseEntity<?> modifierQuantite(
             @RequestParam Long produitId,
             @RequestParam Long stockId,
-            @RequestParam int nouvelleQuantite) {
+            @RequestParam int modification) {
         try {
-            ProduitStock produitStock = produitStockService.modifierQuantite(produitId, stockId, nouvelleQuantite);
+            ProduitStock produitStock = produitStockService.modifierQuantite(produitId, stockId, modification);
             return ResponseEntity.ok(produitStock);
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(Map.of(
                 "message", e.getMessage(),
                 "success", false
+            ));
+        }
+    }
+    
+    // Générer un rapport des produits par pays
+    @GetMapping("/rapport-par-pays")
+    @PreAuthorize("hasAuthority('GESTIONNAIRE_STOCK')")
+    public ResponseEntity<?> genererRapportParPays() {
+        try {
+            Map<String, Object> rapport = produitStockService.genererRapportParPays();
+            return ResponseEntity.ok(Map.of(
+                "success", true,
+                "message", "Rapport généré avec succès",
+                "rapport", rapport
+            ));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of(
+                "success", false,
+                "message", "Erreur lors de la génération du rapport: " + e.getMessage()
+            ));
+        }
+    }
+    
+    // Récupérer les produits à stock faible (en-dessous du seuil)
+    @GetMapping("/stock-faible")
+    @PreAuthorize("hasAuthority('GESTIONNAIRE_STOCK')")
+    public ResponseEntity<?> getProduitsBelowThreshold(@RequestParam(defaultValue = "10") int seuil) {
+        try {
+            Map<String, Object> produitsBelowThreshold = produitStockService.getProduitsBelowThreshold(seuil);
+            return ResponseEntity.ok(Map.of(
+                "success", true,
+                "message", "Liste des produits à stock faible générée",
+                "produits", produitsBelowThreshold
+            ));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of(
+                "success", false,
+                "message", "Erreur lors de la génération de la liste: " + e.getMessage()
+            ));
+        }
+    }
+
+    @GetMapping("/statistics")
+    @PreAuthorize("hasAuthority('GESTIONNAIRE_STOCK')")
+    public ResponseEntity<?> getStockStatistics() {
+        try {
+            Map<String, Object> stats = produitStockService.getStockStatistics();
+            return ResponseEntity.ok(Map.of(
+                "success", true,
+                "statistics", stats
+            ));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of(
+                "success", false,
+                "message", "Erreur lors du calcul des statistiques: " + e.getMessage()
             ));
         }
     }

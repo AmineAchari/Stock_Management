@@ -50,6 +50,9 @@ const StockForm = () => {
       if (isEdit) {
         response = await apiService.updateStock(id, stock);
         setMessage("Le stock a été mis à jour avec succès!");
+        window.dispatchEvent(new CustomEvent('stock-updated', { 
+          detail: { stockId: id } 
+        }));
       } else {
         response = await apiService.createStock(stock);
         setMessage("Le stock a été créé avec succès!");
@@ -65,6 +68,17 @@ const StockForm = () => {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    const handleStockUpdate = () => {
+      fetchStock(id);
+    };
+    
+    window.addEventListener('stock-updated', handleStockUpdate);
+    return () => {
+      window.removeEventListener('stock-updated', handleStockUpdate);
+    };
+  }, [id]);
 
   return (
     <div className="container">

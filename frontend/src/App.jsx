@@ -1,6 +1,5 @@
 import React from "react";
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
-import "bootstrap/dist/css/bootstrap.min.css";
 import "./App.css";
 
 import Login from "./components/auth/Login";
@@ -11,14 +10,33 @@ import ProduitForm from "./components/produits/ProduitForm";
 import StockList from "./components/stocks/StockList";
 import StockDetail from "./components/stocks/StockDetail";
 import StockForm from "./components/stocks/StockForm";
+import StocksReport from "./components/stocks/StocksReport";
 import AffectationForm from "./components/produit-stock/AffectationForm";
+import ImportLivraisons from "./components/import/ImportLivraisons";
+import MappingLivreurList from "./components/mapping-livreur/MappingLivreurList";
 import Header from "./components/layout/Header";
 import Footer from "./components/layout/Footer";
 import AuthService from "./services/auth.service";
+import ProduitAffectations from './components/produits/ProduitAffectations';
+import AffectationProduit from './components/affectation/AffectationProduit';
 
 // Composant pour les routes protégées
 const PrivateRoute = ({ children }) => {
   return AuthService.isAuthenticated() ? children : <Navigate to="/login" />;
+};
+
+// Composant pour les routes protégées avec vérification du rôle
+const RoleRoute = ({ children, requiredRole }) => {
+  if (!AuthService.isAuthenticated()) {
+    return <Navigate to="/login" />;
+  }
+  
+  // Vérification du rôle avec la nouvelle méthode
+  if (requiredRole && !AuthService.hasRole(requiredRole)) {
+    return <Navigate to="/stocks" />;
+  }
+  
+  return children;
 };
 
 function App() {
@@ -31,6 +49,7 @@ function App() {
             <Route path="/" element={<Navigate replace to="/login" />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
+            
 
             <Route
               path="/produits"
@@ -102,6 +121,32 @@ function App() {
               element={
                 <PrivateRoute>
                   <StockForm />
+                </PrivateRoute>
+              }
+            />
+            <Route
+              path="/import/livraisons"
+              element={
+                <RoleRoute requiredRole="GESTIONNAIRE_STOCK">
+                  <ImportLivraisons />
+                </RoleRoute>
+              }
+            />
+            <Route
+              path="/mapping-livreurs"
+              element={
+                <RoleRoute requiredRole="GESTIONNAIRE_STOCK">
+                  <MappingLivreurList />
+                </RoleRoute>
+              }
+            />
+            <Route path="/produits/:id/stocks" element={<ProduitAffectations />} />
+            <Route path="/affectation" element={<AffectationProduit />} />
+            <Route
+              path="/stocks/rapport"
+              element={
+                <PrivateRoute>
+                  <StocksReport />
                 </PrivateRoute>
               }
             />

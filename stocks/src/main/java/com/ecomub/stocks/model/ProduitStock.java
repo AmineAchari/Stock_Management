@@ -2,12 +2,8 @@ package com.ecomub.stocks.model;
 import jakarta.persistence.*;
 import lombok.*;
 
-@Data
-@Getter
-@Setter
 @Entity
-@AllArgsConstructor
-@NoArgsConstructor
+@Data
 @Table(name = "produit_stock")
 public class ProduitStock {
     @Id
@@ -15,12 +11,12 @@ public class ProduitStock {
     private Long id;
 
     @ManyToOne
-    @JoinColumn(name = "produit_id")
+    @JoinColumn(name = "produit_id", nullable = false)
     private Produit produit;
 
     @ManyToOne
-    @JoinColumn(name = "centre_stock_id")
+    @JoinColumn(name = "centre_stock_id", nullable = false)
     private Stock stock;
 
-    private int quantite;
+    private Integer quantite;
 }

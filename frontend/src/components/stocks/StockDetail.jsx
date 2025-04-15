@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { Link, useParams } from "react-router-dom";
 import apiService from "../../services/api.service";
+import stockService from "../../services/stock.service";
 
 const StockDetail = () => {
   const [stock, setStock] = useState(null);
@@ -44,22 +45,33 @@ const StockDetail = () => {
   const fetchProduitsByStock = useCallback(async () => {
     try {
       setProduitsLoading(true);
-      console.log("Début de la récupération des produits pour le stock ID:", id);
+      console.log("Récupération des produits pour le stock ID:", id);
       const response = await apiService.getProduitsByStock(id);
-      console.log("Réponse de l'API getProduitsByStock:", response);
-      console.log("Données reçues:", response.data);
-      console.log("Nombre de produits récupérés:", response.data ? response.data.length : 0);
       
-      // Si les données sont dans un format différent, les transformer
-      const produitsFormatted = Array.isArray(response.data) ? response.data.map(ps => {
-        console.log("Traitement du produit:", ps);
-        return renderProduitInfo(ps);
-      }) : [];
+      // Store raw product data
+      const rawProduits = response.data;
+      console.log("Données brutes reçues:", rawProduits);
+
+      // Map the products with complete information
+      const produitsProcessed = rawProduits.map(item => {
+        // Handle nested product object structure
+        const produitData = item.produit || item;
+        return {
+          id: produitData.id,
+          nom: produitData.nom,
+          reference: produitData.reference,
+          quantite: item.quantite || produitData.quantite || 0,
+          seuilAlerte: produitData.seuilAlerte
+        };
+      });
+
+      console.log("Produits traités:", produitsProcessed);
+      setProduits(produitsProcessed);
+      setProduitsAvecNoms(produitsProcessed); // Set initial data
       
-      setProduits(produitsFormatted);
-      setProduitsLoading(false);
     } catch (error) {
       console.error("Erreur lors du chargement des produits:", error);
+    } finally {
       setProduitsLoading(false);
     }
   }, [id]);
@@ -69,15 +81,18 @@ const StockDetail = () => {
     if (produits.length > 0 && allProduits.length > 0) {
       const produitsEnrichis = produits.map(p => {
         const produitInfo = allProduits.find(ap => ap.id === p.id);
+        if (!produitInfo) {
+          console.warn(`Produit non trouvé dans la liste complète: ID=${p.id}`);
+          return p; // Return original data if not found
+        }
         return {
           ...p,
-          nom: produitInfo ? produitInfo.nom : `Produit ${p.id}`,
-          reference: produitInfo ? produitInfo.reference : `REF-${p.id}`
+          nom: produitInfo.nom || p.nom, // Keep original name if exists
+          reference: produitInfo.reference || p.reference // Keep original reference if exists
         };
       });
+      console.log("Produits enrichis:", produitsEnrichis);
       setProduitsAvecNoms(produitsEnrichis);
-    } else {
-      setProduitsAvecNoms(produits);
     }
   }, [produits, allProduits]);
 
@@ -87,73 +102,6 @@ const StockDetail = () => {
     fetchAllProduits(); // Charger tous les produits pour les noms
   }, [fetchStock, fetchProduitsByStock, fetchAllProduits]);
 
-  const renderProduitInfo = (ps) => {
-    console.log("Données reçues pour le produit:", ps);
-    
-    // Format 1: objet ProduitStock avec un produit imbriqué
-    if (ps.produit && ps.quantite) {
-      console.log("Format 1 détecté: produit imbriqué");
-      return {
-        id: ps.produit.id,
-        nom: ps.produit.nom,
-        reference: ps.produit.reference,
-        quantite: ps.quantite
-      };
-    }
-    
-    // Format 2: produit avec quantité directement dans l'objet
-    if (ps.id && ps.nom && ps.quantite !== undefined) {
-      console.log("Format 2 détecté: produit avec quantité");
-      return {
-        id: ps.id,
-        nom: ps.nom,
-        reference: ps.reference || 'N/A',
-        quantite: ps.quantite
-      };
-    }
-    
-    // Format 3: objet avec un id de produit et une quantité
-    if (ps.produitId && ps.quantite) {
-      console.log("Format 3 détecté: produitId et quantité");
-      return {
-        id: ps.produitId,
-        nom: ps.nomProduit || 'Produit ' + ps.produitId,
-        reference: ps.reference || 'N/A',
-        quantite: ps.quantite
-      };
-    }
-    
-    // Format 4: objet produit_stock avec produit_id
-    if (ps.produit_id && ps.quantite) {
-      console.log("Format 4 détecté: produit_id et quantité");
-      return {
-        id: ps.produit_id,
-        nom: ps.nom || 'Produit ' + ps.produit_id,
-        reference: ps.reference || 'N/A',
-        quantite: ps.quantite
-      };
-    }
-    
-    // Format 5: directement depuis la base MySQL (structure du tableau)
-    if (ps && typeof ps.id === 'number' && typeof ps.quantite === 'number' && typeof ps.produit_id === 'number' && typeof ps.centre_stock_id === 'number') {
-      console.log("Format 5 détecté: format MySQL brut");
-      return {
-        id: ps.produit_id,
-        nom: 'Produit ' + ps.produit_id,
-        reference: 'REF-' + ps.produit_id,
-        quantite: ps.quantite
-      };
-    }
-    
-    // Format par défaut - essayer de récupérer ce qu'on peut
-    console.log("Format par défaut utilisé");
-    return {
-      id: ps.id || ps.produitId || ps.produit_id || 'N/A',
-      nom: ps.nom || ps.nomProduit || 'Produit sans nom',
-      reference: ps.reference || 'N/A',
-      quantite: ps.quantite || 0
-    };
-  };
 
   // Ajout d'une fonction pour rafraîchir les produits
   const handleRefreshProduits = () => {
@@ -193,6 +141,44 @@ const StockDetail = () => {
   const handleCancel = () => {
     setEditMode(false);
     setEditingId(null);
+  };
+
+  const handleExport = async () => {
+    try {
+      setMessage("Exportation en cours...");
+
+      const response = await stockService.exportStockDetails(id);
+
+      // Créer le blob
+      const blob = new Blob([response.data], {
+        type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+      });
+
+      // Créer l'URL et le lien de téléchargement
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+
+      // Générer le nom du fichier
+      const today = new Date().toISOString().split('T')[0];
+      const filename = `stock_${stock.nom}_${today}.xlsx`;
+      link.setAttribute('download', filename);
+
+      // Déclencher le téléchargement
+      document.body.appendChild(link);
+      link.click();
+
+      // Nettoyer
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+
+      setMessage("Export réussi!");
+      setTimeout(() => setMessage(""), 3000);
+
+    } catch (error) {
+      console.error("Erreur lors de l'exportation:", error);
+      setMessage("Erreur lors de l'exportation du fichier");
+    }
   };
 
   return (
@@ -265,9 +251,8 @@ const StockDetail = () => {
                 <table className="table table-striped table-hover">
                   <thead className="table-dark">
                     <tr>
-                      <th>ID</th>
-                      <th>Produit</th>
                       <th>Référence</th>
+                      <th>Produit</th>
                       <th>Quantité</th>
                       <th>Actions</th>
                     </tr>
@@ -275,9 +260,8 @@ const StockDetail = () => {
                   <tbody>
                     {produitsAvecNoms.map((ps) => (
                       <tr key={ps.id || `prod-${ps.id}`}>
-                        <td>{ps.id}</td>
-                        <td>{ps.nom}</td>
                         <td>{ps.reference}</td>
+                        <td>{ps.nom}</td>
                         <td>
                           {editMode && editingId === ps.id ? (
                             <input
@@ -358,7 +342,7 @@ const StockDetail = () => {
               </div>
             )}
           </div>
-          <div className="card-footer py-2 d-flex">
+          <div className="card-footer py-2 d-flex justify-content-between">
             <div className="btn-group btn-group-sm">
               <Link to="/stocks" className="btn btn-secondary">
                 Retour
@@ -370,6 +354,14 @@ const StockDetail = () => {
                 Affecter un produit
               </Link>
             </div>
+            <button 
+              className="btn btn-success btn-sm"
+              onClick={handleExport}
+              disabled={produitsLoading || produitsAvecNoms.length === 0}
+            >
+              <i className="fas fa-file-excel me-1"></i>
+              Exporter Excel
+            </button>
           </div>
         </div>
       ) : (

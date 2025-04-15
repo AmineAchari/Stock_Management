@@ -38,7 +38,7 @@ const Login = () => {
         
         // Navigation sans recharger la page
         setTimeout(() => {
-          navigate("/produits", { replace: true });
+          navigate("/stocks", { replace: true });
         }, 500);
       } else {
         setMessage("Erreur: Pas de token reçu du serveur");

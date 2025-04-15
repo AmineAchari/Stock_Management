@@ -12,7 +12,6 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Function;
-import java.util.logging.Logger;
 
 @Component
 public class JwtUtil {
@@ -20,10 +19,10 @@ public class JwtUtil {
     @Value("${jwt.secret}")
     private String secret;
 
-    @Value("${jwt.expiration}")
+    @Value("${jwt.expiration}")  // Utiliser la valeur directe sans commentaire
     private Long expiration;
     
-    @Value("${jwt.refresh.expiration:604800000}") // 7 jours par défaut
+    @Value("${jwt.refresh.expiration}")  // Utiliser la valeur directe sans commentaire
     private Long refreshExpiration;
 
     public String getUsernameFromToken(String token) {
@@ -104,10 +103,10 @@ public class JwtUtil {
         return (username.equals(userDetails.getUsername()) && !isTokenExpired(token));
     }
     
-    // Vérifier si le token est proche de son expiration (moins de 5 minutes)
+    // Augmenter le délai avant l'alerte d'expiration (30 minutes au lieu de 5)
     public boolean isTokenNearExpiration(String token) {
         final Date expiration = getExpirationDateFromToken(token);
         long timeUntilExpiration = expiration.getTime() - System.currentTimeMillis();
-        return timeUntilExpiration < 300000; // 5 minutes en millisecondes
+        return timeUntilExpiration < 1800000; // 30 minutes en millisecondes
     }
 }

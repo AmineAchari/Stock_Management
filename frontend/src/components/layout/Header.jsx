@@ -67,18 +67,33 @@ const Header = () => {
           {currentUser && (
             <ul className="navbar-nav mx-auto">
               <li className="nav-item">
-                <Link to="/produits" className="nav-link py-0 my-1 small" style={{fontSize: '1rem'}}>
-                  Produits
-                </Link>
-              </li>
-              <li className="nav-item">
                 <Link to="/stocks" className="nav-link py-0 my-1 small" style={{fontSize: '1rem'}}>
                   Stocks
                 </Link>
               </li>
               <li className="nav-item">
+                <Link to="/stocks/rapport" className="nav-link py-0 my-1 small" style={{fontSize: '1rem'}}>
+                  Rapport
+                </Link>
+              </li>
+              <li className="nav-item">
+                <Link to="/produits" className="nav-link py-0 my-1 small" style={{fontSize: '1rem'}}>
+                  Produits
+                </Link>
+              </li>
+              <li className="nav-item">
                 <Link to="/affectation" className="nav-link py-0 my-1 small" style={{fontSize: '1rem'}}>
-                Affectation des produits
+                  Affectation 
+                </Link>
+              </li>
+              <li className="nav-item">
+                <Link to="/import/livraisons" className="nav-link py-0 my-1 small" style={{fontSize: '1rem'}}>
+                  Importation 
+                </Link>
+              </li>
+              <li className="nav-item">
+                <Link to="/mapping-livreurs" className="nav-link py-0 my-1 small" style={{fontSize: '1rem'}}>
+                  Livreurs
                 </Link>
               </li>
             </ul>

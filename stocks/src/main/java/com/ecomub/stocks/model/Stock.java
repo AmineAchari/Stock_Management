@@ -23,4 +23,26 @@ public class Stock {
 
     @Enumerated(EnumType.STRING)
     private TypeStock typeStock;
+
+    @Column(nullable = false)
+    private boolean actif = true;
+
+    @Column(name = "prestataire")
+    private String prestataire;
+
+    public boolean isActif() {
+        return actif;
+    }
+
+    public void setActif(boolean actif) {
+        this.actif = actif;
+    }
+
+    public String getPrestataire() {
+        return prestataire;
+    }
+
+    public void setPrestataire(String prestataire) {
+        this.prestataire = prestataire;
+    }
 }
