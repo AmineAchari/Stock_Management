@@ -25,7 +25,7 @@ public class Produit {
 
     private String description;
 
-    @Column(name = "seuil_alerte", nullable = false)
+    /*@Column(name = "seuil_alerte", nullable = false)
     private Integer seuilAlerte = 30; // Default threshold value
 
     // Validation methods
@@ -39,5 +39,5 @@ public class Produit {
         if (seuilAlerte == null) {
             seuilAlerte = 30; // Set default if null
         }
-    }
+    }*/
 }

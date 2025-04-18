@@ -1,123 +1,122 @@
-import axios from 'axios';
-import authService from './auth.service';
-import authHeader from './auth-header';
+// c:\Users\Dell_Amine\Desktop\Stock_Management\frontend\src\services\api.service.jsx
 
+import axios from 'axios';
+// authService n'est pas directement utilisé si authHeader fait le travail
+// import authService from './auth.service';
+import authHeader from './auth-header'; // Fonction qui retourne l'en-tête d'autorisation
+
+// Définition de l'URL de base de l'API
 const API_URL = 'http://localhost:8080/api';
 
+// Création d'une instance Axios avec l'URL de base configurée
 const axiosInstance = axios.create({
-  baseURL: API_URL,
+  baseURL: API_URL, // Utilise la constante API_URL ici
   headers: {
     'Content-Type': 'application/json'
   }
 });
 
+// Intercepteur pour ajouter automatiquement le header d'authentification à chaque requête
 axiosInstance.interceptors.request.use(
   (config) => {
-    const user = authService.getCurrentUser();
-    if (user && user.token) {
-      // Use Authorization header instead of x-auth-token
-      config.headers.Authorization = `Bearer ${user.token}`;
-    }
+    const header = authHeader(); // Récupère { Authorization: 'Bearer ...' } ou {}
+    if (header && header.Authorization) {
+      config.headers.Authorization = header.Authorization;
+    } 
     return config;
   },
   (error) => {
+    // Gérer les erreurs de requête ici si besoin
+    console.error("Interceptor Request Error:", error);
     return Promise.reject(error);
   }
 );
 
+// Définition du service API qui utilise l'instance Axios configurée
 const apiService = {
-  // Stocks
+
+  // === Stocks ===
   getAllStocks: () => axiosInstance.get('/stocks'),
   getStockById: (id) => axiosInstance.get(`/stocks/${id}`),
   createStock: (stock) => axiosInstance.post('/stocks', stock),
   updateStock: (id, stock) => axiosInstance.put(`/stocks/${id}`, stock),
   deleteStock: (id) => axiosInstance.delete(`/stocks/${id}`),
-  // Récupérer tous les produits d'un stock spécifique
-  getProduitsByStock: (stockId) => {
-    console.log("Appel de l'API pour récupérer les produits du stock:", stockId);
-    // Utiliser le bon endpoint pour récupérer les produits d'un stock    
-    return axiosInstance.get(`/produit-stock/stock/${stockId}/produits`, {
-      params: { _t: new Date().getTime() }
-    });
-  },
-  
-  // Produits
-  getAllProduits: () => axiosInstance.get('/produits'),
+  getStocksByCountry: () => axiosInstance.get('/stocks/by-country'), // Endpoint pour rapport
+
+  // === Produits ===
+  getAllProduits: () => axiosInstance.get('/produits'), // Une seule définition
   getProduitById: (id) => axiosInstance.get(`/produits/${id}`),
   createProduit: (produit) => axiosInstance.post('/produits', produit),
   updateProduit: (id, produit) => axiosInstance.put(`/produits/${id}`, produit),
   deleteProduit: (id) => axiosInstance.delete(`/produits/${id}`),
-  
-  // Affectation
-  affecterProduit: (produitId, stockId, quantite) => {
-    const user = authService.getCurrentUser();
-    // S'assurer que l'en-tête d'autorisation est explicitement défini
-    const headers = {
-      'Authorization': `Bearer ${user.token}`
-    };
-    return axiosInstance.post('/produit-stock/affecter', null, {
-      params: { 
-        produitId, 
-        stockId, 
-        quantite
-      },
-      headers
-    });
-  },
-
-  // Modifier la quantité d'un produit dans un stock
-  modifierQuantite: (produitId, stockId, nouvelleQuantite) => {
-    const user = authService.getCurrentUser();
-    // S'assurer que l'en-tête d'autorisation est explicitement défini
-    const headers = {
-      'Authorization': `Bearer ${user.token}`
-    };
-    return axiosInstance.put('/produit-stock/modifier-quantite', null, {
-      params: { 
-        produitId, 
-        stockId, 
-        modification: nouvelleQuantite // Le backend attend "modification" comme nom de paramètre
-      },
-      headers
-    });
-  },
-
-  // Ajouter cette méthode à votre service API
   getStatsProduit: (produitId) => axiosInstance.get(`/produits/${produitId}/stats`),
-
-  // Ou obtenir les statistiques par lots
   getStatsProduits: (produitIds) => axiosInstance.post('/produits/stats', { produitIds }),
-  
-  // Récupérer les stocks groupés par pays
-  getStocksByCountry: () => axiosInstance.get('/stocks/by-country'),
-  
-  // Récupérer les produits par pays
-  getProduitsByCountry: (pays) => axiosInstance.get('/produit-stock/rapport-par-pays', {
-    params: { pays }
-  }),
 
-  // Récupérer les produits en dessous d'un seuil
-  getProduitsBelowThreshold: async (threshold = 30) => {
-    try {
-      const response = await axios.get(`${API_URL}/stocks/produits-seuil`, {
-        params: { threshold },
-        headers: authHeader()
-      });
-      return response;
-    } catch (error) {
-      console.error('Error fetching low stock items:', error);
-      throw error;
-    }
+  // === ProduitStock / Affectation ===
+  getProduitsByStock: (stockId) => {
+    console.log("API: getProduitsByStock pour stockId:", stockId);
+    return axiosInstance.get(`/produit-stock/stock/${stockId}/produits`);
+  },
+
+  // Affecter un produit à un stock (SANS note)
+  affecterProduit: (produitId, stockId, quantite) => {
+    console.log(`API: affecterProduit - pId:${produitId}, sId:${stockId}, qte:${quantite}`);
+    return axiosInstance.post('/produit-stock/affecter', null, {
+      params: {
+        produitId,
+        stockId,
+        quantite // Le backend attend 'quantite' pour cet endpoint
+        // Pas de 'note' ici
+      }
+    });
+  },
+
+  // Modifier SEULEMENT la quantité
+  modifierQuantite: (produitId, stockId, nouvelleQuantite) => {
+    console.log(`API: modifierQuantite - pId:${produitId}, sId:${stockId}, qte:${nouvelleQuantite}`);
+    return axiosInstance.put('/produit-stock/modifier-quantite', null, {
+      params: {
+        produitId,
+        stockId,
+        modification: nouvelleQuantite // Change 'nouvelleQuantite' en 'modification'
+      }
+    });
   },
 
   annulerAffectation: (produitId, stockId) => {
+    console.log(`API: annulerAffectation - pId:${produitId}, sId:${stockId}`);
     return axiosInstance.delete('/produit-stock/annuler-affectation', {
-      params: { 
-        produitId, 
-        stockId 
-      }
+      params: { produitId, stockId }
     });
+  },
+
+  // === Rapports & Statistiques ===
+  getProduitsBelowThreshold: (threshold = 10) => {
+    console.log(`API: getProduitsBelowThreshold - seuil:${threshold}`);
+    return axiosInstance.get(`/produit-stock/stock-faible`, {
+      params: { seuil: threshold }
+    });
+  },
+
+  getStockReportByLocation: (groupBy) => {
+    console.log(`API Call: getStockReportByLocation with groupBy=${groupBy}`);
+    return axiosInstance.get('/stocks/report/by-location', { // Vérifier si cet endpoint est correct
+      params: { groupBy }
+    });
+  },
+
+  getProduitsByCountry: (pays) => {
+    console.log(`API: getProduitsByCountry - pays:${pays}`);
+    return axiosInstance.get('/produit-stock/rapport-par-pays', {
+      params: { pays }
+    });
+  },
+
+  getStockStatistics: () => {
+    console.log("API: getStockStatistics");
+    return axiosInstance.get('/produit-stock/statistics');
   }
+
 };
 
 export default apiService;

@@ -22,18 +22,6 @@ axiosInstance.interceptors.request.use(
   }
 );
 
-// Fonction pour obtenir la configuration à jour
-const getConfig = () => {
-  const headers = {
-    ...authHeader(),
-    'Content-Type': 'application/json'
-  };
-  
-  return {
-    headers,
-    withCredentials: false // Essayer les deux options
-  };
-};
 
 class ProduitService {
   getAllProduits() {

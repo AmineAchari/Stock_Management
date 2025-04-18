@@ -1,20 +1,27 @@
+// src/services/affectation.service.jsx
 import axios from 'axios';
 import authHeader from './auth-header';
 
-const API_URL = 'http://localhost:8080/api';
+const API_URL = 'http://localhost:8080/api/produit-stock'; // URL de base pour ce module
 
 class AffectationService {
-  createAffectation(affectation) {
-    return axios.post(`${API_URL}/affectations`, affectation, { 
-      headers: authHeader(),
-      params: {
-        checkExisting: true // Ajouter un flag pour la vérification
-      }
-    });
-  }
+
+
+  // Dans affectation.service.jsx
+createAffectation(produitId, stockId, quantite) {
+  return axios.post(`${API_URL}/affecter`, null, {
+    headers: authHeader(),
+    params: { // Envoi comme paramètres de requête (?produitId=...&stockId=...)
+      produitId: produitId,
+      stockId: stockId,
+      nouvelleQuantite: quantite
+    }
+  });
+}
+
 
   getAffectationsByStock(stockId) {
-    return axios.get(`${API_URL}/affectations/stock/${stockId}`, { headers: authHeader() });
+    return axios.get(`${API_URL}/stock/${stockId}/produits`, { headers: authHeader() });
   }
 
   getAffectationsByProduit(produitId) {
@@ -30,9 +37,9 @@ class AffectationService {
   }
 
   annulerAffectation(produitId, stockId) {
-    return axios.delete(`${API_URL}/produit-stock/annuler-affectation`, {
+    return axios.delete(`${API_URL}/annuler-affectation`, {
       headers: authHeader(),
-      data: { 
+      params: { // Utilise params pour DELETE
         produitId: produitId,
         stockId: stockId
       }
@@ -40,7 +47,7 @@ class AffectationService {
   }
 
   verifierAffectationExistante(produitId, stockId) {
-    return axios.get(`${API_URL}/produit-stock/verifier`, {
+    return axios.get(`${API_URL}/verifier`, { // Correction: enlevé le /produit-stock redondant
       headers: authHeader(),
       params: {
         produitId,
@@ -50,4 +57,7 @@ class AffectationService {
   }
 }
 
-export default new AffectationService();
+// Exporte une instance
+const affectationServiceInstance = new AffectationService();
+export default affectationServiceInstance;
+

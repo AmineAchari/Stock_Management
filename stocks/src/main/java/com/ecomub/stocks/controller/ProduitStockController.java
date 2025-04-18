@@ -66,9 +66,9 @@ public class ProduitStockController {
     public ResponseEntity<?> modifierQuantite(
             @RequestParam Long produitId,
             @RequestParam Long stockId,
-            @RequestParam int modification) {
+            @RequestParam("modification") int quantite) {
         try {
-            ProduitStock produitStock = produitStockService.modifierQuantite(produitId, stockId, modification);
+            ProduitStock produitStock = produitStockService.modifierQuantite(produitId, stockId, quantite);
             return ResponseEntity.ok(produitStock);
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(Map.of(

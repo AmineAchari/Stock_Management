@@ -1,3 +1,25 @@
+/* src/index.css ou src/App.css */
+html, body, #root {
+  height: 100%; /* Assure que les éléments racine prennent toute la hauteur */
+  margin: 0;
+  padding: 0;
+  overflow: hidden; /* Empêche le body de scroller, le scroll sera géré par <main> */
+}
+
+/* Optionnel: Style pour la barre de scroll dans le menu de la sidebar */
+.sidebar-menu-scrollable::-webkit-scrollbar {
+  width: 6px;
+}
+.sidebar-menu-scrollable::-webkit-scrollbar-thumb {
+  background-color: rgba(255, 255, 255, 0.2);
+  border-radius: 3px;
+}
+.sidebar-menu-scrollable {
+  scrollbar-width: thin; /* Pour Firefox */
+  scrollbar-color: rgba(255, 255, 255, 0.2) transparent; /* Pour Firefox */
+}
+
+
 .profile-img-card {
     width: 96px;
     height: 96px;

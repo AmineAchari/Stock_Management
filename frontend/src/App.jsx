@@ -1,162 +1,129 @@
-import React from "react";
-import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
+// src/App.jsx
+import React, { useState } from "react"; // Ajout de useState et useEffect
+import { Routes, Route, Navigate } from "react-router-dom";
 import "./App.css";
 import '@fortawesome/fontawesome-free/css/all.min.css';
+// Ne plus importer ProSidebarProvider et useProSidebar
+import { Sidebar } from 'react-pro-sidebar';
 
+import SidebarContent from "./components/layout/SidebarContent";
+import AuthService from "./services/auth.service";
+// --- Imports des composants de page ---
 import Login from "./components/auth/Login";
 import Register from "./components/auth/Register";
-import ProduitList from "./components/produits/ProduitList";
-import ProduitDetail from "./components/produits/ProduitDetail";
-import ProduitForm from "./components/produits/ProduitForm";
+import Dashboard from "./components/dashboard/Dashboard";
 import StockList from "./components/stocks/StockList";
 import StockDetail from "./components/stocks/StockDetail";
 import StockForm from "./components/stocks/StockForm";
 import StocksReport from "./components/stocks/StocksReport";
-import AffectationForm from "./components/produit-stock/AffectationForm";
+import ProduitList from "./components/produits/ProduitList";
+import ProduitDetail from "./components/produits/ProduitDetail";
+import ProduitForm from "./components/produits/ProduitForm";
+import AffectationProduit from './components/affectation/AffectationProduit';
 import ImportLivraisons from "./components/import/ImportLivraisons";
 import MappingLivreurList from "./components/mapping-livreur/MappingLivreurList";
-import Header from "./components/layout/Header";
-import Footer from "./components/layout/Footer";
-import AuthService from "./services/auth.service";
-import ProduitAffectations from './components/produits/ProduitAffectations';
-import AffectationProduit from './components/affectation/AffectationProduit';
+import LocationStockReport from "./components/stocks/LocationStockReport";
+// --- Fin Imports ---
 
-// Composant pour les routes protégées
 const PrivateRoute = ({ children }) => {
   return AuthService.isAuthenticated() ? children : <Navigate to="/login" />;
 };
 
-// Composant pour les routes protégées avec vérification du rôle
-const RoleRoute = ({ children, requiredRole }) => {
-  if (!AuthService.isAuthenticated()) {
-    return <Navigate to="/login" />;
-  }
-  
-  // Vérification du rôle avec la nouvelle méthode
-  if (requiredRole && !AuthService.hasRole(requiredRole)) {
-    return <Navigate to="/stocks" />;
-  }
-  
-  return children;
-};
+// AppContent gère maintenant l'état de la sidebar
+function AppContent() {
+  // États pour contrôler la sidebar
+  const [collapsed, setCollapsed] = useState(false);
+  const [toggled, setToggled] = useState(false); // Pour le mode mobile/burger
+  const [broken, setBroken] = useState(false); // Pour savoir si on est en mode mobile (basé sur breakpoint)
 
-function App() {
+  // Fonctions pour contrôler l'état
+  const handleToggleSidebar = () => {
+    setToggled(!toggled);
+  };
+
+  const handleCollapseSidebar = () => {
+    setCollapsed(!collapsed);
+  };
+
+  // Callback pour la prop onBreakPoint de Sidebar
+  const handleBroken = (isBroken) => {
+    setBroken(isBroken);
+    // Optionnel: Fermer la sidebar si on passe de mobile à desktop
+    if (!isBroken) {
+      setToggled(false);
+    }
+  };
+
   return (
-    <Router>
-      <div>
-        <Header />
-        <div className="container mt-4">
-          <Routes>
-            <Route path="/" element={<Navigate replace to="/login" />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/register" element={<Register />} />
-            
+    <div style={{ display: 'flex', height: '100vh', overflow: 'hidden' }}>
+      <Sidebar
+        backgroundColor="#212529"
+        rootStyles={{
+          color: 'rgba(255, 255, 255, 0.8)',
+          borderColor: 'rgba(255, 255, 255, 0.1)',
+          height: '100vh',
+          display: 'flex',
+          flexDirection: 'column',
+          flexShrink: 0,
+        }}
+        collapsed={collapsed} // Passe l'état collapsed
+        toggled={toggled}     // Passe l'état toggled
+        onBackdropClick={handleToggleSidebar} // Gère le clic hors sidebar en mode mobile
+        onBreakPoint={handleBroken} // Détecte le passage en mode mobile
+        breakPoint="md" // Définit la largeur pour le mode mobile
+      >
+        {/* Passe l'état collapsed à SidebarContent */}
+        <SidebarContent collapsed={collapsed} />
+      </Sidebar>
 
-            <Route
-              path="/produits"
-              element={
-                <PrivateRoute>
-                  <ProduitList />
-                </PrivateRoute>
-              }
-            />
-            <Route
-              path="/produits/:id"
-              element={
-                <PrivateRoute>
-                  <ProduitDetail />
-                </PrivateRoute>
-              }
-            />
-            <Route
-              path="/produits/new"
-              element={
-                <PrivateRoute>
-                  <ProduitForm />
-                </PrivateRoute>
-              }
-            />
-            <Route
-              path="/produits/edit/:id"
-              element={
-                <PrivateRoute>
-                  <ProduitForm />
-                </PrivateRoute>
-              }
-            />
+      <main style={{ flexGrow: 1, overflowY: 'auto', padding: '20px', backgroundColor: '#f8f9fa' }}>
+        {/* Boutons de contrôle */}
+        {/* Affiche le bouton burger seulement en mode mobile (broken=true) */}
+        {broken && (
+          <button className="btn btn-light mb-3" onClick={handleToggleSidebar}>
+             <i className="fas fa-bars"></i>
+          </button>
+        )}
+        {/* Affiche le bouton collapse/expand seulement en mode desktop (broken=false) */}
+        {!broken && (
+          <button className="btn btn-light mb-3" onClick={handleCollapseSidebar}>
+             <i className={`fas ${collapsed ? 'fa-arrow-right' : 'fa-arrow-left'}`}></i>
+          </button>
+        )}
 
-            <Route
-              path="/stocks"
-              element={
-                <PrivateRoute>
-                  <StockList />
-                </PrivateRoute>
-              }
-            />
-            <Route
-              path="/stocks/:id"
-              element={
-                <PrivateRoute>
-                  <StockDetail />
-                </PrivateRoute>
-              }
-            />
-            <Route
-              path="/stocks/new"
-              element={
-                <PrivateRoute>
-                  <StockForm />
-                </PrivateRoute>
-              }
-            />
-            <Route
-              path="/affectation"
-              element={
-                <PrivateRoute>
-                  <AffectationForm />
-                </PrivateRoute>
-              }
-            />
-            <Route
-              path="/stocks/edit/:id"
-              element={
-                <PrivateRoute>
-                  <StockForm />
-                </PrivateRoute>
-              }
-            />
-            <Route
-              path="/import/livraisons"
-              element={
-                <RoleRoute requiredRole="GESTIONNAIRE_STOCK">
-                  <ImportLivraisons />
-                </RoleRoute>
-              }
-            />
-            <Route
-              path="/mapping-livreurs"
-              element={
-                <RoleRoute requiredRole="GESTIONNAIRE_STOCK">
-                  <MappingLivreurList />
-                </RoleRoute>
-              }
-            />
-            <Route path="/produits/:id/stocks" element={<ProduitAffectations />} />
-            <Route path="/affectation" element={<AffectationProduit />} />
-            <Route
-              path="/stocks/rapport"
-              element={
-                <PrivateRoute>
-                  <StocksReport />
-                </PrivateRoute>
-              }
-            />
-          </Routes>
-        </div>
-        <Footer />
-      </div>
-    </Router>
+        <Routes>
+          {/* Routes publiques */}
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
+
+          {/* Routes protégées */}
+          <Route path="/" element={AuthService.isAuthenticated() ? <Navigate replace to="/dashboard" /> : <Navigate replace to="/login" />} />
+          <Route path="/dashboard" element={<PrivateRoute><Dashboard /></PrivateRoute>} />
+          <Route path="/stocks" element={<PrivateRoute><StockList /></PrivateRoute>} />
+          <Route path="/stocks/new" element={<PrivateRoute><StockForm /></PrivateRoute>} />
+          <Route path="/stocks/edit/:id" element={<PrivateRoute><StockForm /></PrivateRoute>} />
+          <Route path="/stocks/:id" element={<PrivateRoute><StockDetail /></PrivateRoute>} />
+          <Route path="/stocks/rapport" element={<PrivateRoute><StocksReport /></PrivateRoute>} />
+          <Route path="/produits" element={<PrivateRoute><ProduitList /></PrivateRoute>} />
+          <Route path="/produits/new" element={<PrivateRoute><ProduitForm /></PrivateRoute>} />
+          <Route path="/produits/edit/:id" element={<PrivateRoute><ProduitForm /></PrivateRoute>} />
+          <Route path="/produits/:id" element={<PrivateRoute><ProduitDetail /></PrivateRoute>} />
+          <Route path="/affectation" element={<PrivateRoute><AffectationProduit /></PrivateRoute>} />
+          <Route path="/import/livraisons" element={<PrivateRoute><ImportLivraisons /></PrivateRoute>} />
+          <Route path="/mapping-livreurs" element={<PrivateRoute><MappingLivreurList /></PrivateRoute>} />
+          <Route path="/reports/location" element={<PrivateRoute><LocationStockReport /></PrivateRoute>} />
+
+          {/* Route par défaut ou 404 */}
+          <Route path="*" element={<Navigate to={AuthService.isAuthenticated() ? "/dashboard" : "/login"} replace />} />
+        </Routes>
+      </main>
+    </div>
   );
 }
+
+// Ne plus utiliser ProSidebarProvider
+const App = () => (
+  <AppContent />
+);
 
 export default App;

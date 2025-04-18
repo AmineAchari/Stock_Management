@@ -121,4 +121,23 @@ public class StockController {
             return ResponseEntity.badRequest().build();
         }
     }
+
+
+    @GetMapping("/report/by-location")
+    @PreAuthorize("hasAuthority('GESTIONNAIRE_STOCK')")
+    public ResponseEntity<?> getStockReportByLocation(@RequestParam String groupBy) {
+        try {
+            Map<String, Object> report = stockService.generateStockReportByLocation(groupBy);
+            return ResponseEntity.ok(report);
+        } catch (IllegalArgumentException e) {
+            // Erreur si groupBy est invalide
+            return ResponseEntity.badRequest().body(Map.of("success", false, "message", e.getMessage()));
+        } catch (Exception e) {
+            // Autres erreurs potentielles
+            System.err.println("Erreur lors de la génération du rapport de stock par localisation: " + e.getMessage());
+            e.printStackTrace(); // Log l'erreur complète côté serveur
+            return ResponseEntity.internalServerError().body(Map.of("success", false, "message", "Erreur interne du serveur lors de la génération du rapport."));
+        }
+    }
+
 }

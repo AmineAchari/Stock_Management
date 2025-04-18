@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import apiService from '../../services/api.service';
-import stockService from '../../services/stock.service';
 
 const StocksGroupedByCountry = () => {
   const [stocksByCountry, setStocksByCountry] = useState({});

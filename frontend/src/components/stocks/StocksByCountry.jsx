@@ -11,7 +11,7 @@ import { format } from 'date-fns';
 
   useEffect(() => {
     loadStocksByCountry();
-  }, [pays]);
+  }, [loadStocksByCountry]);
 
   const loadStocksByCountry = async () => {
     try {

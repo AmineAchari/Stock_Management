@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import ProduitService from '../../services/produit.service';
 import ImportProduitsModal from './ImportProduitsModal';
 
-// Ajouter le composant ActionButton
+// Composant ActionButton (peut être externalisé si utilisé ailleurs)
 const ActionButton = ({ icon, label, variant, onClick, title }) => (
   <button
     className={`btn btn-${variant} btn-sm mx-1`}
@@ -16,40 +16,81 @@ const ActionButton = ({ icon, label, variant, onClick, title }) => (
 
 const ProduitList = () => {
   const navigate = useNavigate();
-  const [produits, setProduits] = useState([]);
+  const [produits, setProduits] = useState([]); // Données originales
+  const [filteredProduits, setFilteredProduits] = useState([]); // Données filtrées pour l'affichage
+  const [searchTerm, setSearchTerm] = useState(''); // Terme de recherche
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [showImportModal, setShowImportModal] = useState(false);
 
+  // Charger les produits au montage initial
   useEffect(() => {
     loadProduits();
   }, []);
 
-  const loadProduits = () => {
-    setLoading(true);
-    ProduitService.getAllProduits()
-      .then(response => {
-        setProduits(response.data);
-        setLoading(false);
-      })
-      .catch(error => {
-        setError('Erreur lors du chargement des produits');
-        setLoading(false);
+  // Effet pour filtrer les produits quand la liste ou le terme de recherche change
+  useEffect(() => {
+    const lowerCaseSearchTerm = searchTerm.toLowerCase().trim();
+    if (!lowerCaseSearchTerm) {
+      setFilteredProduits(produits); // Si recherche vide, afficher tout
+    } else {
+      const filtered = produits.filter(produit => {
+        // Vérification sûre pour nom et référence
+        const nomMatch = String(produit.nom || '').toLowerCase().includes(lowerCaseSearchTerm);
+        const referenceMatch = String(produit.reference || '').toLowerCase().includes(lowerCaseSearchTerm);
+        return nomMatch || referenceMatch;
       });
+      setFilteredProduits(filtered);
+    }
+  }, [produits, searchTerm]); // Dépendances : produits et searchTerm
+
+  // Fonction pour charger les produits (async/await)
+  const loadProduits = async () => {
+    setLoading(true);
+    setError(''); // Réinitialiser l'erreur à chaque chargement
+    // Ne pas réinitialiser le succès ici pour le garder visible après une action réussie
+    try {
+      const response = await ProduitService.getAllProduits();
+      setProduits(response.data);
+      // Le filtrage sera appliqué par l'useEffect ci-dessus
+    } catch (error) {
+      console.error('Erreur chargement produits:', error);
+      setError('Erreur lors du chargement des produits. Veuillez réessayer.');
+      setProduits([]); // Vider la liste en cas d'erreur
+      setFilteredProduits([]);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleDelete = (id) => {
+  // Fonction pour supprimer un produit (async/await)
+  const handleDelete = async (id) => {
     if (window.confirm('Êtes-vous sûr de vouloir supprimer ce produit ?')) {
-      ProduitService.deleteProduit(id)
-        .then(() => {
-          setSuccess('Produit supprimé avec succès');
-          loadProduits();
-        })
-        .catch(error => {
-          setError('Erreur lors de la suppression du produit');
-        });
+      setLoading(true); // Indiquer une action en cours
+      setError('');
+      setSuccess('');
+      try {
+        await ProduitService.deleteProduit(id);
+        setSuccess('Produit supprimé avec succès');
+        // Pas besoin de recharger explicitement si le backend renvoie la liste à jour
+        // ou si on filtre manuellement la liste actuelle.
+        // Pour la simplicité, on recharge :
+        await loadProduits(); // Recharger la liste mettra à jour 'produits' et déclenchera le filtre
+      } catch (error) {
+        console.error('Erreur suppression produit:', error);
+        setError(`Erreur lors de la suppression: ${error.response?.data?.message || error.message || 'Erreur inconnue'}`);
+        setLoading(false); // Important d'arrêter le loading en cas d'échec ici
+      }
+      // Pas de finally setLoading(false) ici car loadProduits le gère en cas de succès
     }
+  };
+
+  const handleImportSuccess = () => {
+    loadProduits(); // Recharger après import
+    setShowImportModal(false);
+    setSuccess("Produits importés avec succès !"); // Message de succès pour l'import
+    setTimeout(() => setSuccess(''), 4000); // Faire disparaître le message après 4s
   };
 
   return (
@@ -69,65 +110,88 @@ const ProduitList = () => {
               icon="fa-file-import"
               variant="success"
               onClick={() => setShowImportModal(true)}
-              title="Importer des produits"
+              title="Importer des produits depuis Excel"
               label="Importer"
             />
           </div>
         </div>
         <div className="card-body">
-          {error && <div className="alert alert-danger">{error}</div>}
-          {success && <div className="alert alert-success">{success}</div>}
+          {/* Afficher les messages d'erreur ou de succès */}
+          {error && <div className="alert alert-danger" role="alert">{error}</div>}
+          {success && <div className="alert alert-success" role="alert">{success}</div>}
+
+          {/* Champ de recherche */}
+          <div className="mb-3">
+            <input
+              type="text"
+              className="form-control"
+              placeholder="Rechercher par nom ou référence..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              disabled={loading} // Désactiver pendant le chargement
+            />
+          </div>
 
           {loading ? (
-            <div className="text-center">
+            <div className="text-center my-5"> {/* Plus d'espace vertical */}
               <div className="spinner-border text-primary" role="status">
                 <span className="visually-hidden">Chargement...</span>
               </div>
+              <p className="mt-2">Chargement des produits...</p>
             </div>
           ) : (
             <div className="table-responsive">
-              <table className="table table-striped table-bordered">
-                <thead>
+              <table className="table table-striped table-bordered table-hover"> {/* Ajout table-hover */}
+                <thead className="table-dark"> {/* En-tête sombre */}
                   <tr>
                     <th>Ref</th>
                     <th>Nom</th>
                     <th>Description</th>
-                    <th>Actions</th>
+                    <th className="text-center">Actions</th> {/* Centrer actions */}
                   </tr>
                 </thead>
                 <tbody>
-                  {produits.length === 0 ? (
+                  {filteredProduits.length === 0 ? (
                     <tr>
-                      <td colSpan="4" className="text-center">Aucun produit trouvé</td>
+                      <td colSpan="4" className="text-center py-4"> {/* Plus d'espace vertical */}
+                        {searchTerm
+                          ? `Aucun produit trouvé pour "${searchTerm}"`
+                          : 'Aucun produit n\'a été ajouté pour le moment.'}
+                      </td>
                     </tr>
                   ) : (
-                    produits.map(produit => (
+                    filteredProduits.map(produit => (
                       <tr key={produit.id}>
                         <td>{produit.reference}</td>
                         <td>{produit.nom}</td>
-                        <td>{produit.description}</td>
-                        <td>
-                          <div className="d-flex align-items-center">
+                        {/* Tronquer la description si elle est trop longue */}
+                        <td title={produit.description}>
+                          {produit.description && produit.description.length > 50
+                            ? `${produit.description.substring(0, 50)}...`
+                            : produit.description || '-'} {/* Afficher '-' si vide */}
+                        </td>
+                        <td className="text-center"> {/* Centrer actions */}
+                          <div className="btn-group btn-group-sm"> {/* Utiliser btn-group pour alignement */}
                             <ActionButton
                               icon="fa-eye"
-                              variant="primary"
+                              variant="outline-info" // Outline pour moins d'encombrement
                               onClick={() => navigate(`/produits/${produit.id}`)}
-                              title="Voir les détails"
-                              label="Voir"
+                              title="Voir les détails du produit"
+                              label="" // Label vide pour ne montrer que l'icône
                             />
                             <ActionButton
                               icon="fa-edit"
-                              variant="warning"
+                              variant="outline-warning" // Outline
                               onClick={() => navigate(`/produits/edit/${produit.id}`)}
                               title="Modifier le produit"
-                              label="Modifier"
+                              label="" // Label vide
                             />
                             <ActionButton
                               icon="fa-trash"
-                              variant="danger"
+                              variant="outline-danger" // Outline
                               onClick={() => handleDelete(produit.id)}
                               title="Supprimer le produit"
-                              label="Supprimer"
+                              label="" // Label vide
                             />
                           </div>
                         </td>
@@ -140,13 +204,12 @@ const ProduitList = () => {
           )}
         </div>
       </div>
-      <ImportProduitsModal 
+
+      {/* Modal d'importation */}
+      <ImportProduitsModal
         show={showImportModal}
         onClose={() => setShowImportModal(false)}
-        onImportSuccess={() => {
-          loadProduits();
-          setShowImportModal(false);
-        }}
+        onImportSuccess={handleImportSuccess} // Utiliser la nouvelle fonction
       />
     </div>
   );
